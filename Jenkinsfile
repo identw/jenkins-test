@@ -1,5 +1,7 @@
 node('docker') {
-    sh 'hostname'
-    checkout scm
-    changes
+    stage('test') {
+        sh 'hostname'
+        checkout scm
+        changes
+    }
 }
