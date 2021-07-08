@@ -1,7 +1,10 @@
 node('docker') {
     stage('test') {
-        sh 'hostname'
         checkout scm
-        changes()
+        def files = [
+            ~'aaa.*bb',
+            ~'bbb.*aaa',
+        ]
+        println debug(files)
     }
 }
