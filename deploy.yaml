@@ -1,0 +1,256 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: test
+  name: test
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: test
+  template:
+    metadata:
+      labels:
+        app: test
+        service: test
+    spec:
+      containers:
+        - name: nginx
+          image: docker.io/nginx:1.20.0-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - /usr/sbin/nginx
+            - -g
+            - daemon off;
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /var/run
+              name: tmp
+            - mountPath: /var/cache/nginx
+              name: tmp
+            - mountPath: /etc/nginx/nginx.conf
+              name: nginx-config
+              subPath: nginx.conf
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 100Mi
+        - name: nginx-config
+          configMap:
+            name: test
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: test1
+  name: test1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: test1
+  template:
+    metadata:
+      labels:
+        app: test1
+        service: test
+    spec:
+      containers:
+        - name: nginx
+          image: docker.io/nginx:1.20.0-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - /usr/sbin/nginx
+            - -g
+            - daemon off;
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /var/run
+              name: tmp
+            - mountPath: /var/cache/nginx
+              name: tmp
+            - mountPath: /etc/nginx/nginx.conf
+              name: nginx-config
+              subPath: nginx.conf
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 100Mi
+        - name: nginx-config
+          configMap:
+            name: test1
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: test
+  name: test
+data:
+  nginx.conf: |-
+    worker_processes  auto;
+
+    error_log  /var/log/nginx/error.log warn;
+    pid        /var/run/nginx.pid;
+
+    events {
+        worker_connections  4096;
+    }
+
+    http {
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+
+        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                          '$status $body_bytes_sent "$http_referer" '
+                          '"$http_user_agent" "$http_x_forwarded_for"';
+
+        access_log  /var/log/nginx/access.log  main;
+
+        sendfile        on;
+        #tcp_nopush     on;
+
+        keepalive_timeout  65;
+
+        server {
+            listen 3000 default;
+            root /usr/share/nginx/html;
+            access_log off;
+
+            location / {
+              add_header Content-type "text/html";
+              return 200 "test1\n";
+            }
+
+            location ~ /\.(?!well-known).* {
+                deny all;
+            }
+        }
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: test1
+  name: test1
+data:
+  nginx.conf: |-
+    worker_processes  auto;
+
+    error_log  /var/log/nginx/error.log warn;
+    pid        /var/run/nginx.pid;
+
+    events {
+        worker_connections  4096;
+    }
+
+    http {
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+
+        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                          '$status $body_bytes_sent "$http_referer" '
+                          '"$http_user_agent" "$http_x_forwarded_for"';
+
+        access_log  /var/log/nginx/access.log  main;
+
+        sendfile        on;
+        #tcp_nopush     on;
+
+        keepalive_timeout  65;
+
+        server {
+            listen 3000 default;
+            root /usr/share/nginx/html;
+            access_log off;
+
+            location / {
+              add_header Content-type "text/html";
+              return 200 "test2\n";
+            }
+
+            location ~ /\.(?!well-known).* {
+                deny all;
+            }
+        }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: test
+  name: test
+spec:
+  ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+      targetPort: http
+  selector:
+    service: test
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app: test
+  name: test
+  annotations:
+    nginx.ingress.kubernetes.io/upstream-hash-by: $remote_addr
+spec:
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: test
+                port:
+                  name: http
+            path: /
+            pathType: ImplementationSpecific
+  tls:
+    - secretName: tls
+      hosts:
+        - example.com
+
