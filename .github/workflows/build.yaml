@@ -9,9 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: steal vault token
+      - uses: actions/checkout@master
+      - name: aaa
         env:
           TEST: ${{ secrets.TEST }}
         run: |
