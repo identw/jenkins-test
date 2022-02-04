@@ -4,11 +4,13 @@ on:
     types:
       - opened
       - reopened
+      - synchronize
     branches:    
       - 'master'
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: 111
     steps:
       - uses: actions/checkout@master
       - name: aaa
