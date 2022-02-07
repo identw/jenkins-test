@@ -1,6 +1,6 @@
 node('docker') {
     stage('test') {
         checkout scm
-        waitK8sResources('deploy.yaml', ['Deployment'], 'Available')
+        sh 'env | grep GIT_'
     }
 }
