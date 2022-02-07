@@ -1,7 +1,7 @@
 node('docker') {
     stage('test') {
         checkout scm
-        sh 'env | grep GIT_'
+        sh 'env | grep GIT_ || true'
         
         println "###########################"
 
